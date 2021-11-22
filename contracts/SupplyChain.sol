@@ -4,12 +4,13 @@ pragma solidity >=0.5.16 <0.9.0;
 contract SupplyChain {
 
   // <owner>
-  address public owner = msg.sender;
+  address public owner;
 
   // <skuCount>
   uint public skuCount;
 
   // <items mapping>
+  mapping(uint => Item) public items;
 
   // <enum State: ForSale, Sold, Shipped, Received>
   enum State {
@@ -55,21 +56,21 @@ contract SupplyChain {
   }
 
   modifier verifyCaller (address _address) { 
-    // require(msg.sender == _address); 
+    require(msg.sender == _address); 
     _;
   }
 
   modifier paidEnough(uint _price) { 
-    // require(msg.value >= _price); 
+    require(msg.value >= _price); 
     _;
   }
 
   modifier checkValue(uint _sku) {
     //refund them after pay for item (why it is before, _ checks for logic before func)
     _;
-    // uint _price = items[_sku].price;
-    // uint amountToRefund = msg.value - _price;
-    // items[_sku].buyer.transfer(amountToRefund);
+    uint _price = items[_sku].price;
+    uint amountToRefund = msg.value - _price;
+    items[_sku].buyer.transfer(amountToRefund);
   }
 
   // For each of the following modifiers, use what you learned about modifiers
@@ -80,19 +81,36 @@ contract SupplyChain {
   // that an Item is for sale. Hint: What item properties will be non-zero when
   // an Item has been added?
 
-  // modifier forSale
+  modifier forSale(uint _sku) {
+      Item memory _item = items[_sku];
+      require(_item.state == State.ForSale && _item.seller != address(0), 'Item is not for sale');
+      _;
+  }
+
   // modifier sold(uint _sku) 
   // modifier shipped(uint _sku) 
   // modifier received(uint _sku) 
 
   constructor() public {
     // 1. Set the owner to the transaction sender
+    owner = msg.sender;
     // 2. Initialize the sku count to 0. Question, is this necessary?
+    // Answer: No, it is ot, because the default value of a uint is 0.
   }
 
   function addItem(string memory _name, uint _price) public returns (bool) {
     // 1. Create a new item and put in array
+    uint test = 5;
+    Item memory _item = Item({
+        name: _name,
+        sku: skuCount,
+        price: _price,
+        state: State.ForSale,
+        seller: payable(msg.sender),
+        buyer: address(0)
+    });
     // 2. Increment the skuCount by one
+    skuCount += 1;
     // 3. Emit the appropriate event
     // 4. return true
 
